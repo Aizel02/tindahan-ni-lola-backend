@@ -1,0 +1,24 @@
+# Build outputs
+/target/
+/build/
+
+# IDE settings
+.idea/
+*.iml
+.vscode/
+
+# Logs
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Environment / secret files
+.env
+application.properties
+application.yml
+secrets.properties
+
+# Maven wrapper binary
+/.mvn/wrapper/maven-wrapper.jar
