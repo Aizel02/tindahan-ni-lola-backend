@@ -1,5 +1,4 @@
 package com.Tindahan.ni.Lola.Sari_sari.Store.website;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import jakarta.annotation.PostConstruct;
@@ -14,7 +13,6 @@ public class SariSariStoreApplication {
         SpringApplication.run(SariSariStoreApplication.class, args);
     }
 
-    // ✅ Automatically create /uploads folder if not exists
     @PostConstruct
     public void initUploadsFolder() {
         try {
