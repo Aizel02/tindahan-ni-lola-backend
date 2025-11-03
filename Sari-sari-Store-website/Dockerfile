@@ -1,17 +1,14 @@
-# Use OpenJDK 17 as the base image
-FROM openjdk:17-jdk-slim
-
-# Set working directory
+# Set workdir
 WORKDIR /app
 
-# Copy all project files
+# Copy project files
 COPY .. .
+
+# Give execute permission to mvnw
+RUN chmod +x mvnw
 
 # Build the Spring Boot app (skip tests for faster build)
 RUN ./mvnw clean package -DskipTests
 
 # Expose port 8080
 EXPOSE 8080
-
-# Run the application
-CMD ["java", "-jar", "target/*.jar"]
