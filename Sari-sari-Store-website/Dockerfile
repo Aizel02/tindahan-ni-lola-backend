@@ -1,12 +1,14 @@
-# Use Maven to build the app
-FROM maven:3.9.5-eclipse-temurin-17 AS build
-WORKDIR /app
-COPY . .
-RUN mvn clean package -DskipTests
+# Use the official OpenJDK 17 image
+FROM openjdk:17-jdk-slim
 
-# Use JDK runtime to run the app
-FROM eclipse-temurin:17-jdk
+# Set working directory inside container
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+
+# Copy Maven build output (the JAR file)
+COPY target/*.jar app.jar
+
+# Expose the port (must match your Spring Boot server.port)
 EXPOSE 8080
-CMD ["java", "-jar", "app.jar"]
+
+# Run the application
+ENTRYPOINT ["java", "-jar", "app.jar"]
