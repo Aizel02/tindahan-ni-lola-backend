@@ -1,24 +1,14 @@
-# Use official Java 17 image
+# Use official OpenJDK image
 FROM openjdk:17-jdk-slim
 
-# Set working directory inside the container
+# Set working directory
 WORKDIR /app
 
-# Copy the Maven wrapper and pom.xml
-COPY .mvn/ .mvn
-COPY mvnw pom.xml ./
+# Copy the Maven/Gradle build output (JAR file) to the container
+COPY target/*.jar app.jar
 
-# Download dependencies first (for faster rebuilds)
-RUN ./mvnw dependency:go-offline -B
-
-# Copy the source code
-COPY src ./src
-
-# Build the Spring Boot app (skipping tests)
-RUN ./mvnw clean package -DskipTests
-
-# Expose port 8080
+# Expose port
 EXPOSE 8080
 
-# Run the generated JAR file
-CMD ["java", "-jar", "target/SariSariStoreWebsiteApplication.jar"]
+# Command to run the JAR file
+ENTRYPOINT ["java", "-jar", "app.jar"]
