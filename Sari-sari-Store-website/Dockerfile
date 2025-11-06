@@ -1,14 +1,30 @@
-# Use the official OpenJDK 17 image
-FROM eclipse-temurin:17-jdk-jammy
+# ===============================
+# Stage 1: Build the application
+# ===============================
+FROM eclipse-temurin:17-jdk-jammy AS builder
 
-# Set working directory inside container
 WORKDIR /app
 
-# Copy Maven build output (the JAR file)
-COPY target/*.jar app.jar
+# Copy Maven wrapper and project files
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
 
-# Expose the port (must match your Spring Boot server.port)
+# Download dependencies (cached layer)
+RUN ./mvnw dependency:go-offline -B
+
+# Copy source code and build
+COPY src ./src
+RUN ./mvnw clean package -DskipTests
+
+# ===============================
+# Stage 2: Run the application
+# ===============================
+FROM eclipse-temurin:17-jdk-jammy
+
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
+
 EXPOSE 8080
 
-# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
