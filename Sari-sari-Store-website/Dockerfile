@@ -10,6 +10,9 @@ COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
 
+# ✅ Give execute permission to mvnw
+RUN chmod +x mvnw
+
 # Download dependencies (cached layer)
 RUN ./mvnw dependency:go-offline -B
 
@@ -26,5 +29,4 @@ WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 
 EXPOSE 8080
-
 ENTRYPOINT ["java", "-jar", "app.jar"]
