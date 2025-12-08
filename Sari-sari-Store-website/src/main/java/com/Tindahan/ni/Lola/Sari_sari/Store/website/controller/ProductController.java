@@ -9,69 +9,72 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/products")
-@CrossOrigin(origins = "${FRONTEND_URL:*}") // Spring will substitute env or fallback "*"
+@CrossOrigin(origins = "${FRONTEND_URL:*}") // set FRONTEND_URL in Render to your Vercel domain (or leave * for dev)
 public class ProductController {
 
     @Autowired
     private ProductRepository productRepository;
 
-    // Use environment variable UPLOAD_DIR if set; otherwise default to "uploads/"
-    private final String UPLOAD_DIR = System.getenv().getOrDefault("UPLOAD_DIR", "uploads/");
+    // Set this env var in Render if you want a different storage path.
+    // Default "uploads" (relative path inside container)
+    private final String UPLOAD_DIR = Optional.ofNullable(System.getenv("UPLOAD_DIR")).orElse("uploads");
 
-    // Optional BACKEND_URL env var so responses can include absolute image URLs in prod
-    private final String BACKEND_URL = System.getenv().getOrDefault("BACKEND_URL", "").trim();
+    // If set, API will return absolute image URLs: BACKEND_URL=https://your-backend.render.com
+    private final String BACKEND_URL = Optional.ofNullable(System.getenv("BACKEND_URL")).orElse("").trim();
 
-    // Helper: convert stored relative image path (/uploads/xxx.jpg) to absolute URL if BACKEND_URL is provided
     private String fullImageUrl(String imageUrl) {
         if (imageUrl == null) return null;
         if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) return imageUrl;
-        if (!BACKEND_URL.isEmpty()) {
+        if (!BACKEND_URL.isBlank()) {
             String base = BACKEND_URL.replaceAll("/+$", "");
             return base + (imageUrl.startsWith("/") ? "" : "/") + imageUrl;
         }
         return imageUrl;
     }
 
+    // Helper: return a response map (avoids mutating JPA entities)
+    private Map<String, Object> toResponse(Product p) {
+        Map<String, Object> m = new HashMap<>();
+        m.put("id", p.getId());
+        m.put("name", p.getName());
+        m.put("category", p.getCategory());
+        m.put("price", p.getPrice());
+        m.put("description", p.getDescription());
+        m.put("imageUrl", fullImageUrl(p.getImageUrl()));
+        return m;
+    }
+
     // GET all products
     @GetMapping
-    public ResponseEntity<List<Product>> getAllProducts() {
+    public ResponseEntity<List<Map<String, Object>>> getAllProducts() {
         List<Product> products = productRepository.findAll();
-        // if BACKEND_URL provided, update imageUrl to full path for each product (non-destructive)
-        if (!BACKEND_URL.isBlank()) {
-            products.forEach(p -> p.setImageUrl(fullImageUrl(p.getImageUrl())));
-        }
-        return ResponseEntity.ok(products);
+        List<Map<String,Object>> resp = new ArrayList<>();
+        for (Product p : products) resp.add(toResponse(p));
+        return ResponseEntity.ok(resp);
     }
 
     // GET products by category
     @GetMapping("/category/{category}")
-    public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable String category) {
+    public ResponseEntity<List<Map<String, Object>>> getProductsByCategory(@PathVariable String category) {
         List<Product> products = productRepository.findByCategoryIgnoreCase(category);
-        if (!BACKEND_URL.isBlank()) {
-            products.forEach(p -> p.setImageUrl(fullImageUrl(p.getImageUrl())));
-        }
         if (products.isEmpty()) {
             return ResponseEntity.status(404).body(List.of());
         }
-        return ResponseEntity.ok(products);
+        List<Map<String,Object>> resp = new ArrayList<>();
+        for (Product p : products) resp.add(toResponse(p));
+        return ResponseEntity.ok(resp);
     }
 
     // GET single product by ID
     @GetMapping("/{id}")
     public ResponseEntity<?> getProductById(@PathVariable Long id) {
         Optional<Product> opt = productRepository.findById(id);
-        if (opt.isPresent()) {
-            Product p = opt.get();
-            if (!BACKEND_URL.isBlank()) p.setImageUrl(fullImageUrl(p.getImageUrl()));
-            return ResponseEntity.ok(p);
-        } else {
-            return ResponseEntity.status(404).body("❌ Product not found with id: " + id);
-        }
+        return opt.<ResponseEntity<?>>map(p -> ResponseEntity.ok(toResponse(p)))
+                .orElseGet(() -> ResponseEntity.status(404).body("❌ Product not found with id: " + id));
     }
 
     // POST new product (supports image upload)
@@ -88,25 +91,21 @@ public class ProductController {
 
             if (imageFile != null && !imageFile.isEmpty()) {
                 Path uploadPath = Paths.get(UPLOAD_DIR);
-                if (!Files.exists(uploadPath)) {
-                    Files.createDirectories(uploadPath);
-                }
+                if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
 
-                String safeFileName = System.currentTimeMillis() + "_" + Path.of(imageFile.getOriginalFilename()).getFileName().toString();
+                String original = Path.of(Objects.requireNonNull(imageFile.getOriginalFilename())).getFileName().toString();
+                String safeFileName = System.currentTimeMillis() + "_" + original.replaceAll("\\s+", "_");
                 Path filePath = uploadPath.resolve(safeFileName);
                 Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-                // Store relative path used by resource handler
+                // store relative path used by resource handler
                 imageUrl = "/uploads/" + safeFileName;
             }
 
             Product product = new Product(name, price, description, imageUrl, category);
             Product savedProduct = productRepository.save(product);
 
-            // if BACKEND_URL set, return full image url
-            if (!BACKEND_URL.isBlank()) savedProduct.setImageUrl(fullImageUrl(savedProduct.getImageUrl()));
-
-            return ResponseEntity.status(201).body(savedProduct);
+            return ResponseEntity.status(201).body(toResponse(savedProduct));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -136,23 +135,22 @@ public class ProductController {
         product.setDescription(description);
 
         try {
-            // Upload new image if provided (and optionally delete old file)
             if (imageFile != null && !imageFile.isEmpty()) {
                 Path uploadPath = Paths.get(UPLOAD_DIR);
                 if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
 
-                String safeFileName = System.currentTimeMillis() + "_" + Path.of(imageFile.getOriginalFilename()).getFileName().toString();
+                String original = Path.of(Objects.requireNonNull(imageFile.getOriginalFilename())).getFileName().toString();
+                String safeFileName = System.currentTimeMillis() + "_" + original.replaceAll("\\s+", "_");
                 Path filePath = uploadPath.resolve(safeFileName);
                 Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-                // delete old file if exists and it is stored under /uploads/
+                // delete old file if stored under /uploads/
                 String old = product.getImageUrl();
                 if (old != null && old.startsWith("/uploads/")) {
                     try {
                         Path oldPath = Paths.get(UPLOAD_DIR).resolve(old.substring("/uploads/".length()));
                         Files.deleteIfExists(oldPath);
                     } catch (Exception ex) {
-                        // log but don't fail update
                         ex.printStackTrace();
                     }
                 }
@@ -161,8 +159,7 @@ public class ProductController {
             }
 
             Product updatedProduct = productRepository.save(product);
-            if (!BACKEND_URL.isBlank()) updatedProduct.setImageUrl(fullImageUrl(updatedProduct.getImageUrl()));
-            return ResponseEntity.ok(updatedProduct);
+            return ResponseEntity.ok(toResponse(updatedProduct));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -180,7 +177,6 @@ public class ProductController {
 
         Product product = opt.get();
 
-        // Delete image file if exists (stored in uploads folder)
         String img = product.getImageUrl();
         if (img != null && img.startsWith("/uploads/")) {
             try {
@@ -188,7 +184,7 @@ public class ProductController {
                 Path filePath = uploadPath.resolve(img.substring("/uploads/".length()));
                 Files.deleteIfExists(filePath);
             } catch (Exception ex) {
-                ex.printStackTrace(); // don't block deletion because of file error
+                ex.printStackTrace();
             }
         }
 
