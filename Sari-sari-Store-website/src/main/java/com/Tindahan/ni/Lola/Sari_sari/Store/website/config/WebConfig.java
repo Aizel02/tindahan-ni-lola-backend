@@ -11,18 +11,23 @@ import java.nio.file.Paths;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    // Use env var FRONTEND_URL if provided (useful on Render + Vercel). Otherwise allow all for dev.
-    private final String frontendUrl = System.getenv("FRONTEND_URL") != null
-            ? System.getenv("FRONTEND_URL")
-            : "*";
-
     @Override
     public void addCorsMappings(CorsRegistry registry) {
+        // Read FRONTEND_URL from environment and normalize it (trim + remove trailing slashes).
+        String raw = System.getenv("FRONTEND_URL");
+        String origin;
+        if (raw == null || raw.isBlank()) {
+            origin = "*"; // development fallback only
+        } else {
+            origin = raw.trim().replaceAll("/+$", "");
+        }
+
         registry.addMapping("/**")
-                .allowedOrigins(frontendUrl.equals("") ? "*" : frontendUrl)
+                .allowedOrigins(origin)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(false); // set true if you need cookies/auth
+                .allowCredentials(false) // set true only if you use cookies/credentials
+                .maxAge(3600);
     }
 
     @Override
