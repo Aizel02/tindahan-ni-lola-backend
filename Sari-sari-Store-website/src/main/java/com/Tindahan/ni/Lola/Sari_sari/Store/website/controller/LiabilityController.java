@@ -5,6 +5,8 @@ import com.Tindahan.ni.Lola.Sari_sari.Store.website.repository.LiabilityReposito
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/liabilities")
@@ -17,28 +19,42 @@ public class LiabilityController {
         this.repo = repo;
     }
 
-    // ✅ Get all liabilities
+    // ✅ GET ALL LIABILITIES
     @GetMapping
     public List<Liability> getAll() {
         return repo.findAll();
     }
 
-    // ✅ Add liability
+    // ✅ ADD LIABILITY
     @PostMapping
     public Liability add(@RequestBody Liability l) {
-        l.setStatus("Pending");
+        l.setStatus("Pending");       // default
+        l.setPaidDate(null);          // not paid yet
         return repo.save(l);
     }
 
-    // ✅ Mark as paid
+    // ✅ MARK AS PAID (with date)
+
     @PutMapping("/{id}/pay")
-    public Liability markAsPaid(@PathVariable Long id) {
-        Liability l = repo.findById(id).orElseThrow();
+    public Liability markAsPaid(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body
+    ) {
+        Liability l = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Liability not found"));
+
         l.setStatus("Paid");
+
+        // ✅ Convert string → LocalDate
+        if (body.get("paidDate") != null && !body.get("paidDate").isEmpty()) {
+            l.setPaidDate(LocalDate.parse(body.get("paidDate")));
+        }
+
         return repo.save(l);
     }
 
-    // ✅ Delete
+
+    // ✅ DELETE LIABILITY
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         repo.deleteById(id);

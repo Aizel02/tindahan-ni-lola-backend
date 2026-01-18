@@ -13,10 +13,13 @@ public class Liability {
     private String debtorName;
     private double amount;
     private String description;
-    private LocalDate dueDate;
-    private String status;
 
-    // ✅ REQUIRED: Empty constructor
+    private LocalDate dueDate;
+
+    private String status;     // Pending | Paid
+    private LocalDate paidDate; // when debt was paid
+
+    // ✅ REQUIRED empty constructor
     public Liability() {}
 
     // Optional constructor
@@ -29,7 +32,7 @@ public class Liability {
         this.status = status;
     }
 
-    // ✅ GETTERS & SETTERS (IMPORTANT)
+    // ===== GETTERS & SETTERS =====
 
     public Long getId() {
         return id;
@@ -67,12 +70,21 @@ public class Liability {
         this.dueDate = dueDate;
     }
 
+    // ✅ REQUIRED FOR CONTROLLER
     public String getStatus() {
         return status;
     }
 
-    // ✅ THIS FIXES YOUR ERROR
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    // ✅ NEW FIELD FOR PAYMENT DATE
+    public LocalDate getPaidDate() {
+        return paidDate;
+    }
+
+    public void setPaidDate(LocalDate paidDate) {
+        this.paidDate = paidDate;
     }
 }
