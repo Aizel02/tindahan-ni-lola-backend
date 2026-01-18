@@ -45,13 +45,13 @@ public class LiabilityController {
 
         l.setStatus("Paid");
 
-        // ✅ Convert string → LocalDate
-        if (body.get("paidDate") != null && !body.get("paidDate").isEmpty()) {
+        if (body.get("paidDate") != null) {
             l.setPaidDate(LocalDate.parse(body.get("paidDate")));
         }
 
         return repo.save(l);
     }
+
 
 
     // ✅ DELETE LIABILITY
