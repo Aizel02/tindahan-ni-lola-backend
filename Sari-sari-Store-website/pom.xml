@@ -6,17 +6,17 @@
 
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- Spring Boot Parent -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.5</version> <!-- ✅ use stable version -->
+        <version>3.2.5</version>
         <relativePath/>
     </parent>
 
     <groupId>com.Tindahan.ni.Lola</groupId>
     <artifactId>Sari-sari-Store-website</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-
     <name>Sari-sari-Store-website</name>
     <description>Spring Boot backend for Tindahan ni Lola</description>
 
@@ -24,7 +24,7 @@
         <java.version>17</java.version>
     </properties>
 
-    <!-- ✅ ALL DEPENDENCIES GO HERE -->
+    <!-- ================= DEPENDENCIES ================= -->
     <dependencies>
 
         <!-- Spring Web -->
@@ -33,7 +33,7 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- JPA -->
+        <!-- JPA / Hibernate -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -46,7 +46,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- JWT (REQUIRED) -->
+        <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -74,7 +74,7 @@
             <version>1.33.0</version>
         </dependency>
 
-        <!-- Dev tools -->
+        <!-- Dev Tools -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
@@ -82,7 +82,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Tests -->
+        <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -91,9 +91,11 @@
 
     </dependencies>
 
+    <!-- ================= BUILD ================= -->
     <build>
         <plugins>
 
+            <!-- Java 17 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -104,9 +106,15 @@
                 </configuration>
             </plugin>
 
+            <!-- Spring Boot Runner -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>
+                        com.Tindahan.ni.Lola.Sari_sari.Store.website.SariSariStoreWebsiteApplication
+                    </mainClass>
+                </configuration>
             </plugin>
 
         </plugins>
