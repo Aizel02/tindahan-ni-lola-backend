@@ -1,7 +1,7 @@
 package com.Tindahan.ni.Lola.Sari_sari.Store.website.controller;
-import com.Tindahan.ni.Lola.Sari.sari.Store.website.model.Store;
-import com.Tindahan.ni.Lola.Sari.sari.Store.website.repository.StoreRepository;
-import com.Tindahan.ni.Lola.Sari.sari.Store.website.security.JwtUtil;
+import com.Tindahan.ni.Lola.Sari_sari.Store.website.model.Store;
+import com.Tindahan.ni.Lola.Sari_sari.Store.website.repository.StoreRepository;
+import com.Tindahan.ni.Lola.Sari_sari.Store.website.security.JwtUtil;
 
 import org.springframework.web.bind.annotation.*;
 
